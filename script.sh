@@ -1,28 +1,27 @@
 #!/bin/bash
 
-# Constants, which represent pre-defined regexp to analyse
-# C code.
+# Describes regexp used for input file analization.
 readonly FUNCTION_DECLARATION_REGEXP_DECL_KEY='^[a-z]+ ([a-z]+)\(\)( )?\{$'
 readonly FUNCTION_CALL_REGEXP_DECL_KEY='^([a-zA-Z]+)\(\)$'
-readonly RETURN_REGEXP_DECL_KEY=''
+readonly FUNCTION_RETURN_REGEXP_DECL_KEY='^return( )?(\"(((\-)?[a-zA-Z0-9]+)\")|((\-)?[a-zA-Z0-9]+))\;$'
 readonly PRINT_REGEXP_DECL_KEY='^printf\("([a-zA-Z0-9 ]+)"\)\;$'
 readonly INCLUDE_REGEXP_DECL_KEY='(^#include( )?<[a-z]+(\.h)?>)|(#include "[a-z]+(\.h)?")$'
-readonly FOR_CYCLE_REGEXP_DECL_KEY='^for( )?\([a-z]+ [a-z]+( )?=( )?[0-9]+\;( )?[a-z]+( )?\<( )?[0-9]+\;( )?[a-z]+\+\+\)( )?\{$'
+readonly IF_CONDITION_REGEXP_DECL_KEY='^if( )?\(([a-zA-Z0-9]+)( )?(==|!=|<|<=|>|>=)( )?([a-zA-Z0-9]+)\)( )?\{$'
+readonly FOR_CYCLE_REGEXP_DECL_KEY='^for( )?\([a-zA-Z0-9]+ ([a-zA-Z0-9]+)( )?=( )?([0-9]+)\;( )?[a-zA-Z0-9]+( )?(<|>|>=|<|<=)( )?([0-9]+)\;( )?(([a-zA-Z0-9]+\+\+\))|([a-zA-Z0-9]+\-\-\))|(\-\-[a-zA-Z0-9]+\))|(\+\+[a-zA-Z0-9]+\)))( )?\{$'
+readonly COMMENT_DECL_KEY='^\/\/(.+)$'
 
-
-# readonly INTEGER_TYPE_DECL_KEY='int'
-# readonly FLOAT_TYPE_DECL_KEY='float'
-# readonly DOUBLE_TYPE_DECL_KEY='double'
-# readonly STRING_TYPE_DECL_KEY='char *'
-
+# Describes input code reserved keys, used for output composition.
 readonly IF_RESERVED_KEY='if'
+readonly FI_RESERVED_KEY='fi'
 readonly ELSE_RESERVED_KEY='else'
 readonly FOR_RESERVED_KEY='for'
 readonly WHILE_RESERVED_KEY='while'
+readonly THEN_RESERVED_KEY='then'
 readonly DO_RESERVED_KEY='do'
 readonly RETURN_RESERVED_KEY='return'
 readonly BREAK_RESERVED_KEY='break'
 readonly CONTINUE_RESERVED_KEY='continue'
+readonly DONE_RESERVED_KEY='done'
 readonly FUNCTION_RESERVED_KEY='function'
 readonly RIGHT_BRACKET_RESERVED_KEY='}'
 readonly LEFT_BRACKET_RESERVED_KEY='{'
@@ -30,20 +29,34 @@ readonly RIGHT_CURVED_BRACKET_RESERVED_KEY=')'
 readonly LEFT_CURVED_BRACKET_RESERVED_KEY='('
 readonly RIGHT_CUBIC_BRACKET_RESERVED_KEY=']'
 readonly LEFT_CUBIC_BRACKET_RESERVED_KEY='['
+readonly COLON_BRACKET_RESERVED_KEY=';'
+readonly DOLLAR_SIGN_RESERVED_KEY='$'
+readonly COMMENT_RESERVED_KEY='#'
+readonly SHEBANG_RESERVED_KEY='#!'
 
+# Describes all supported commands.
+readonly ECHO_COMMAND='echo'
+
+# Describes name of the entrypoint function.
 readonly ENTRYPOINT_FUNCTION_RESERVED_KEY='main'
 
-# Describes storage related properties.
-readonly LOCK_STORAGE_DECL_KEY='lock_storage'
-readonly CYCLE_LOCK_STORAGE_DECL_KEY='cycle'
-
-readonly FUNCTIONS_STORAGE_DECL_KEY='functions_storage'
-
+# Describes scope storage related properties.
 readonly SCOPE_STORAGE_DECL_KEY='scope'
+readonly FUNCTION_SCOPE_DECL_KEY='function'
+readonly CYCLE_SCOPE_DECL_KEY='cycle'
+readonly IF_SCOPE_DECL_KEY='if'
 readonly INDEX_SCOPE_STORAGE_DECL_KEY='index'
 
-readonly REGEXP_MATCH_STORAGE_DECL_KEY='regexp_storage'
-readonly LAST_REGEXP_MATCH_DECL_KEY='last'
+# Describes regexp storage related properties.
+readonly REGEXP_MATCH_STORAGE_DECL_KEY='regexp'
+readonly FIRST_REGEXP_MATCH_DECL_KEY='first'
+readonly SECOND_REGEXP_MATCH_DECL_KEY='second'
+readonly THIRD_REGEXP_MATCH_DECL_KEY='third'
+readonly TORTH_REGEXP_MATCH_DECL_KEY='forth'
+readonly FIFTH_REGEXP_MATCH_DECL_KEY='fifth'
+
+# Describes shell related properties.
+readonly DEFAULT_SHEBANG='/bin/bash'
 
 # Describes amount of spaces, which should be applied
 # for each scope index number increase.
@@ -66,42 +79,118 @@ function map_keys() {
 
 # Checks if the given key exists in a global map.
 function map_exists() {
-    for key in $(map_keys $FUNCTIONS_STORAGE_DECL_KEY); do
-        if [[ $(map_get $FUNCTIONS_STORAGE_DECL_KEY $key) == $1 ]]; then
+    for key in $(map_keys $1); do
+        if [[ $(map_get $1 $key) == $2 ]]; then
             return 0
         fi
     done
+
     return 1
 }
  
-function set_last_regexp_match() {
-    map_put $REGEXP_MATCH_STORAGE_DECL_KEY $LAST_REGEXP_MATCH_DECL_KEY $1
+function set_first_regexp_match() {
+    map_put $REGEXP_MATCH_STORAGE_DECL_KEY $FIRST_REGEXP_MATCH_DECL_KEY $1
 }
 
-function retrieve_last_regexp_match() {
-    echo $(map_get $REGEXP_MATCH_STORAGE_DECL_KEY $LAST_REGEXP_MATCH_DECL_KEY)
+function retrieve_first_regexp_match() {
+    echo $(map_get $REGEXP_MATCH_STORAGE_DECL_KEY $FIRST_REGEXP_MATCH_DECL_KEY)
 }
 
+function set_second_regexp_match() {
+    map_put $REGEXP_MATCH_STORAGE_DECL_KEY $SECOND_REGEXP_MATCH_DECL_KEY $1
+}
 
+function retrieve_second_regexp_match() {
+    echo $(map_get $REGEXP_MATCH_STORAGE_DECL_KEY $SECOND_REGEXP_MATCH_DECL_KEY)
+}
+
+function set_third_regexp_match() {
+    map_put $REGEXP_MATCH_STORAGE_DECL_KEY $THIRD_REGEXP_MATCH_DECL_KEY $1
+}
+
+function retrieve_third_regexp_match() {
+    echo $(map_get $REGEXP_MATCH_STORAGE_DECL_KEY $THIRD_REGEXP_MATCH_DECL_KEY)
+}
+
+function set_forth_regexp_match() {
+    map_put $REGEXP_MATCH_STORAGE_DECL_KEY $FORTH_REGEXP_MATCH_DECL_KEY $1
+}
+
+function retrieve_forth_regexp_match() {
+    echo $(map_get $REGEXP_MATCH_STORAGE_DECL_KEY $FORTH_REGEXP_MATCH_DECL_KEY)
+}
+
+function set_fifth_regexp_match() {
+    map_put $REGEXP_MATCH_STORAGE_DECL_KEY $FIFTH_REGEXP_MATCH_DECL_KEY $1
+}
+
+function retrieve_fifth_regexp_match() {
+    echo $(map_get $REGEXP_MATCH_STORAGE_DECL_KEY $FIFTH_REGEXP_MATCH_DECL_KEY)
+}
+
+function increase_if_scope() {
+    local value=$(map_get $SCOPE_STORAGE_DECL_KEY $IF_SCOPE_DECL_KEY)
+    map_put $SCOPE_STORAGE_DECL_KEY $IF_SCOPE_DECL_KEY $(( ++value ))
+}
+
+function decrease_if_scope() {
+    local value=$(map_get $SCOPE_STORAGE_DECL_KEY $IF_SCOPE_DECL_KEY)
+    map_put $SCOPE_STORAGE_DECL_KEY $IF_SCOPE_DECL_KEY $(( --value ))
+}
+
+function retrieve_if_scope() {
+    echo $(map_get $SCOPE_STORAGE_DECL_KEY $IF_SCOPE_DECL_KEY)
+}
+
+function increase_cycle_scope() {
+    local value=$(map_get $SCOPE_STORAGE_DECL_KEY $CYCLE_SCOPE_DECL_KEY)
+    map_put $SCOPE_STORAGE_DECL_KEY $CYCLE_SCOPE_DECL_KEY $(( ++value ))
+}
+
+function decrease_cycle_scope() {
+    local value=$(map_get $SCOPE_STORAGE_DECL_KEY $CYCLE_SCOPE_DECL_KEY)
+    map_put $SCOPE_STORAGE_DECL_KEY $CYCLE_SCOPE_DECL_KEY $(( --value ))
+}
+
+function retrieve_cycle_scope() {
+    echo $(map_get $SCOPE_STORAGE_DECL_KEY $CYCLE_SCOPE_DECL_KEY)
+}
+
+function enable_function_scope() {
+    map_put $SCOPE_STORAGE_DECL_KEY $FUNCTION_SCOPE_DECL_KEY 1
+}
+
+function disable_function_scope() {
+    map_put $SCOPE_STORAGE_DECL_KEY $FUNCTION_SCOPE_DECL_KEY 0
+}
+
+function retrieve_function_scope() {
+    echo $(map_get $SCOPE_STORAGE_DECL_KEY $FUNCTION_SCOPE_DECL_KEY)
+}
 
 function increase_index_scope() {
     local value=$(map_get $SCOPE_STORAGE_DECL_KEY $INDEX_SCOPE_STORAGE_DECL_KEY)
     map_put $SCOPE_STORAGE_DECL_KEY $INDEX_SCOPE_STORAGE_DECL_KEY $(( ++value ))
 }
 
+# Decreases shift index from scope storage.
 function decrease_index_scope() {
     local value=$(map_get $SCOPE_STORAGE_DECL_KEY $INDEX_SCOPE_STORAGE_DECL_KEY)
     map_put $SCOPE_STORAGE_DECL_KEY $INDEX_SCOPE_STORAGE_DECL_KEY $(( --value ))
 }
 
+# Retrieves shift index from the scope storage.
 function retrieve_index_scope() {
     echo $(map_get $SCOPE_STORAGE_DECL_KEY $INDEX_SCOPE_STORAGE_DECL_KEY)
 }
 
+# Initializes internal storage.
 function init_storage() {
     map_put $SCOPE_STORAGE_DECL_KEY $INDEX_SCOPE_STORAGE_DECL_KEY 0
+    map_put $SCOPE_STORAGE_DECL_KEY $IF_SCOPE_DECL_KEY 0
+    map_put $SCOPE_STORAGE_DECL_KEY $CYCLE_SCOPE_DECL_KEY 0
+    map_put $SCOPE_STORAGE_DECL_KEY $FUNCTION_SCOPE_DECL_KEY 0
 }
-
 
 # Validates given file to be processed.
 function validate() {
@@ -159,7 +248,7 @@ function is_ignorable() {
 # Checks if the given line is a function beginning declaration.
 function is_function_beginning() {
     if [[ $1 =~ $FUNCTION_DECLARATION_REGEXP_DECL_KEY ]]; then
-        set_last_regexp_match "${BASH_REMATCH[1]}"
+        set_first_regexp_match "${BASH_REMATCH[1]}"
         return 0
     else    
         return 1
@@ -169,7 +258,17 @@ function is_function_beginning() {
 # Checks if the given line is a function call declaration.
 function is_function_call() {
     if [[ $1 =~ $FUNCTION_CALL_REGEXP_DECL_KEY ]]; then
-        set_last_regexp_match "${BASH_REMATCH[1]}"
+        set_first_regexp_match "${BASH_REMATCH[1]}"
+        return 0
+    else    
+        return 1
+    fi
+}
+
+# Checks if the given line is a function return declaration.
+function is_function_return() {
+    if [[ $1 =~ $FUNCTION_RETURN_REGEXP_DECL_KEY ]]; then
+        set_first_regexp_match "${BASH_REMATCH[2]}"
         return 0
     else    
         return 1
@@ -186,7 +285,18 @@ function is_ending_bracket() {
 
 function is_printf() {
     if [[ $1 =~ $PRINT_REGEXP_DECL_KEY ]]; then
-        set_last_regexp_match "${BASH_REMATCH[1]}"
+        set_first_regexp_match "${BASH_REMATCH[1]}"
+        return 0
+    else    
+        return 1
+    fi
+}
+
+function is_if_condition() {
+    if [[ $1 =~ $IF_CONDITION_REGEXP_DECL_KEY ]]; then
+        set_first_regexp_match "${BASH_REMATCH[2]}"
+        set_second_regexp_match "${BASH_REMATCH[4]}"
+        set_third_regexp_match "${BASH_REMATCH[6]}"
         return 0
     else    
         return 1
@@ -196,7 +306,7 @@ function is_printf() {
 # Checks if the given line is a for cycle declaration.
 function is_for_cycle() {
     if [[ $1 =~ $FOR_CYCLE_REGEXP_DECL_KEY ]]; then
-        set_last_regexp_match "${BASH_REMATCH[1]}"
+        set_first_regexp_match "${BASH_REMATCH[1]}"
         return 0
     else    
         return 1
@@ -219,6 +329,16 @@ function is_continue() {
     fi
 }
 
+function is_comment() {
+    local F=$1
+    if [[ "\"$F\"" =~ $COMMENT_DECL_KEY ]]; then
+        set_first_regexp_match "${BASH_REMATCH[1]}" 
+        return 0
+    else    
+        return 1
+    fi
+}
+
 # # Adds given token to a selected lock storage cell. 
 # # The first argument is a lock storage type.
 # # The second argument is a token ID.
@@ -234,7 +354,9 @@ function is_continue() {
 # function find_available_position() {
 
 # }
-# 
+
+
+# Generates local shift due to the previously saved state.
 function retrieve_shift() {
     local shift=""
     for ((i=0;i<$(retrieve_index_scope);i++)); do
@@ -252,11 +374,29 @@ function compose_function_beginning() {
 }
 
 function compose_function_call() {
-    echo "$(retrieve_shift)$ $1$LEFT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY"
+    echo "$(retrieve_shift) $1$LEFT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY"
+}
+
+function compose_function_return() {
+    echo "$(retrieve_shift)$ECHO_COMMAND $1"
+}
+
+function compose_if_condition() {   
+    echo "$(retrieve_shift)$IF_RESERVED_KEY $LEFT_CUBIC_BRACKET_RESERVED_KEY$LEFT_CUBIC_BRACKET_RESERVED_KEY $DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $1 $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY $2 $DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $3 $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY $RIGHT_CUBIC_BRACKET_RESERVED_KEY$RIGHT_CUBIC_BRACKET_RESERVED_KEY$COLON_BRACKET_RESERVED_KEY $THEN_RESERVED_KEY"
+}
+
+function compose_if_ending() {
+    echo "$(retrieve_shift)$FI_RESERVED_KEY
+    "
 }
 
 function compose_for_cycle_beginning() {
-    echo "$(retrieve_shift)$FOR_RESERVED_KEY $LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY $LEFT_BRACKET_RESERVED_KEY"
+    echo "$(retrieve_shift)$FOR_RESERVED_KEY $LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY$COLON_BRACKET_RESERVED_KEY $THEN_RESERVED_KEY"
+}
+
+function compose_cycle_ending() {
+    echo "$(retrieve_shift)$DONE_RESERVED_KEY
+    "
 }
 
 function compose_break() {
@@ -268,15 +408,24 @@ function compose_continue() {
 }
 
 function compose_printf() {
-    echo "$(retrieve_shift)echo \"$1\""
+    echo "$(retrieve_shift)$ECHO_COMMAND \"$1\""
 }
 
 function compose_ending_bracket() {
-    echo "$(retrieve_shift)$RIGHT_BRACKET_RESERVED_KEY"
+    echo "$(retrieve_shift)$RIGHT_BRACKET_RESERVED_KEY
+    "
+}
+
+function compose_comment() {
+    echo "$(retrieve_shift)$COMMENT_RESERVED_KEY $1"
+}
+
+function compose_shebang() {
+    echo "$SHEBANG_RESERVED_KEY$DEFAULT_SHEBANG
+    "
 }
 
 function compose_entrypoint_execution() {
-    printf "\n"
     echo "$ENTRYPOINT_FUNCTION_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY"
 }
 
@@ -286,8 +435,17 @@ function write_to_output() {
     echo "$1" >> $2
 }   
 
+# Initiates terminate exit.
+function terminate_exit() {
+    echo "Unsupported input was detacted!"
+    rm $1
+    exit 1
+}
+
 # Main entrypoint for the transpilator.
 function main() {
+    write_to_output "$(compose_shebang)" $2
+
     while read -r line || [ -n "$line" ]
     do
         # Generate UUID for the token
@@ -305,20 +463,36 @@ function main() {
 
         is_function_beginning "$line"
         if [[ $? == 0 ]]; then
-            write_to_output "$(compose_function_beginning $(retrieve_last_regexp_match))" $2
+            write_to_output "$(compose_function_beginning $(retrieve_first_regexp_match))" $2
+            enable_function_scope
             increase_index_scope
             continue
         fi
 
         is_function_call "$line"
         if [[ $? == 0 ]]; then
-            write_to_output "$(compose_function_call $(retrieve_last_regexp_match))" $2
+            write_to_output "$(compose_function_call $(retrieve_first_regexp_match))" $2
+            continue
+        fi
+
+        is_function_return "$line"
+        if [[ $? == 0 ]]; then
+            write_to_output "$(compose_function_return $(retrieve_first_regexp_match))" $2
+            continue
+        fi
+
+        is_if_condition "$line"
+        if [[ $? == 0 ]]; then
+            write_to_output "$(compose_if_condition $(retrieve_first_regexp_match) $(retrieve_second_regexp_match) $(retrieve_third_regexp_match))" $2
+            increase_if_scope
+            increase_index_scope
             continue
         fi
 
         is_for_cycle "$line"
         if [[ $? == 0 ]]; then
             write_to_output "$(compose_for_cycle_beginning)" $2
+            increase_cycle_scope
             increase_index_scope
             continue
         fi
@@ -337,28 +511,43 @@ function main() {
 
         is_printf "$line"
         if [[ $? == 0 ]]; then
-            retrieve_last_regexp_match
-            write_to_output "$(compose_printf $(retrieve_last_regexp_match))" $2
+            write_to_output "$(compose_printf $(retrieve_first_regexp_match))" $2
             continue
         fi
 
         is_ending_bracket "$line"
         if [[ $? == 0 ]]; then
             decrease_index_scope
-            write_to_output "$(compose_ending_bracket)" $2
+
+            if [[ $(retrieve_if_scope) > 0 ]]; then
+                write_to_output "$(compose_if_ending)" $2
+                decrease_if_scope
+            elif [[ $(retrieve_cycle_scope) > 0 ]]; then
+                write_to_output "$(compose_cycle_ending)" $2
+                decrease_cycle_scope
+            else
+                if [[ $(retrieve_function_scope) == 1 ]]; then
+                    disable_function_scope
+                fi
+
+                write_to_output "$(compose_ending_bracket)" $2
+            fi
+            
             continue
         fi
 
-        # add_lock_storage_token $CYCLE_TEMP_STORAGE_DECL_KEY $uuid
+        is_comment "$line"
+        if [[ $? == 0 ]]; then
+            write_to_output "$(compose_comment $(retrieve_first_regexp_match))" $2
+            continue
+        fi
 
         echo "$line"
+
+        terminate_exit $2
     done < $1
 
     write_to_output "$(compose_entrypoint_execution)" $2
-
-    map_exists $1
-    echo $?
-    # echo $(map_keys $LOCK_STORAGE_DECL_KEY)
 }
 
 validate $1 $2
