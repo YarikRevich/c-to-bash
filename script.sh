@@ -9,7 +9,7 @@ readonly PRINT_REGEXP_DECL_KEY='^printf\("([a-zA-Z0-9 ]+)"\)\;$'
 readonly INCLUDE_REGEXP_DECL_KEY='(^#include( )?<[a-z]+(\.h)?>)|(#include "[a-z]+(\.h)?")$'
 readonly IF_CONDITION_REGEXP_DECL_KEY='^if( )?\(([a-zA-Z0-9]+)( )?(==|!=|<|<=|>|>=)( )?([a-zA-Z0-9]+)\)( )?\{$'
 readonly FOR_CYCLE_REGEXP_DECL_KEY='^for( )?\([a-zA-Z0-9]+ ([a-zA-Z0-9]+)( )?=( )?([a-zA-Z0-9]+)\;( )?[a-zA-Z0-9]+( )?(<|>|>=|<|<=)( )?([a-zA-Z0-9]+)\;( )?((([a-zA-Z0-9]+\+\+)\))|(([a-zA-Z0-9]+\-\-)\))|((\-\-[a-zA-Z0-9]+)\))|((\+\+[a-zA-Z0-9]+)\)))( )?\{$'
-readonly COMMENT_DECL_KEY='^\/\/(.+)$'
+readonly COMMENT_DECL_KEY='^\/\/([a-zA-Z0-9\. ]+)$'
 
 # Describes input code reserved keys, used for output composition.
 readonly IF_RESERVED_KEY='if'
@@ -93,52 +93,52 @@ function map_exists() {
  
 # Sets first regexp match.
 function set_first_regexp_match() {
-    map_put $REGEXP_MATCH_STORAGE_DECL_KEY $FIRST_REGEXP_MATCH_DECL_KEY $1
+    map_put $REGEXP_MATCH_STORAGE_DECL_KEY $FIRST_REGEXP_MATCH_DECL_KEY "$1"
 }
 
 # Retrieves first regexp match.
 function retrieve_first_regexp_match() {
-    echo $(map_get $REGEXP_MATCH_STORAGE_DECL_KEY $FIRST_REGEXP_MATCH_DECL_KEY)
+    echo "$(map_get $REGEXP_MATCH_STORAGE_DECL_KEY $FIRST_REGEXP_MATCH_DECL_KEY)"
 }
 
 # Sets second regexp match.
 function set_second_regexp_match() {
-    map_put $REGEXP_MATCH_STORAGE_DECL_KEY $SECOND_REGEXP_MATCH_DECL_KEY $1
+    map_put $REGEXP_MATCH_STORAGE_DECL_KEY $SECOND_REGEXP_MATCH_DECL_KEY "$1"
 }
 
 # Retrieves second regexp match.
 function retrieve_second_regexp_match() {
-    echo $(map_get $REGEXP_MATCH_STORAGE_DECL_KEY $SECOND_REGEXP_MATCH_DECL_KEY)
+    echo "$(map_get $REGEXP_MATCH_STORAGE_DECL_KEY $SECOND_REGEXP_MATCH_DECL_KEY)"
 }
 
 # Sets third regexp match.
 function set_third_regexp_match() {
-    map_put $REGEXP_MATCH_STORAGE_DECL_KEY $THIRD_REGEXP_MATCH_DECL_KEY $1
+    map_put $REGEXP_MATCH_STORAGE_DECL_KEY $THIRD_REGEXP_MATCH_DECL_KEY "$1"
 }
 
 # Retrieves third regexp match.
 function retrieve_third_regexp_match() {
-    echo $(map_get $REGEXP_MATCH_STORAGE_DECL_KEY $THIRD_REGEXP_MATCH_DECL_KEY)
+    echo "$(map_get $REGEXP_MATCH_STORAGE_DECL_KEY $THIRD_REGEXP_MATCH_DECL_KEY)"
 }
 
 # Sets forth regexp match.
 function set_forth_regexp_match() {
-    map_put $REGEXP_MATCH_STORAGE_DECL_KEY $FORTH_REGEXP_MATCH_DECL_KEY $1
+    map_put $REGEXP_MATCH_STORAGE_DECL_KEY $FORTH_REGEXP_MATCH_DECL_KEY "$1"
 }
 
 # Retrieves forth regexp match.
 function retrieve_forth_regexp_match() {
-    echo $(map_get $REGEXP_MATCH_STORAGE_DECL_KEY $FORTH_REGEXP_MATCH_DECL_KEY)
+    echo "$(map_get $REGEXP_MATCH_STORAGE_DECL_KEY $FORTH_REGEXP_MATCH_DECL_KEY)"
 }
 
 # Sets fifth regexp match.
 function set_fifth_regexp_match() {
-    map_put $REGEXP_MATCH_STORAGE_DECL_KEY $FIFTH_REGEXP_MATCH_DECL_KEY $1
+    map_put $REGEXP_MATCH_STORAGE_DECL_KEY $FIFTH_REGEXP_MATCH_DECL_KEY "$1"
 }
 
 # Retrieves fifth regexp match.
 function retrieve_fifth_regexp_match() {
-    echo $(map_get $REGEXP_MATCH_STORAGE_DECL_KEY $FIFTH_REGEXP_MATCH_DECL_KEY)
+    echo "$(map_get $REGEXP_MATCH_STORAGE_DECL_KEY $FIFTH_REGEXP_MATCH_DECL_KEY)"
 }
 
 # Increases if scope value.
@@ -155,7 +155,7 @@ function decrease_if_scope() {
 
 # Retrieves if scope value.
 function retrieve_if_scope() {
-    echo $(map_get $SCOPE_STORAGE_DECL_KEY $IF_SCOPE_DECL_KEY)
+    echo "$(map_get $SCOPE_STORAGE_DECL_KEY $IF_SCOPE_DECL_KEY)"
 }
 
 function increase_cycle_scope() {
@@ -169,7 +169,7 @@ function decrease_cycle_scope() {
 }
 
 function retrieve_cycle_scope() {
-    echo $(map_get $SCOPE_STORAGE_DECL_KEY $CYCLE_SCOPE_DECL_KEY)
+    echo "$(map_get $SCOPE_STORAGE_DECL_KEY $CYCLE_SCOPE_DECL_KEY)"
 }
 
 function enable_function_scope() {
@@ -181,7 +181,7 @@ function disable_function_scope() {
 }
 
 function retrieve_function_scope() {
-    echo $(map_get $SCOPE_STORAGE_DECL_KEY $FUNCTION_SCOPE_DECL_KEY)
+    echo "$(map_get $SCOPE_STORAGE_DECL_KEY $FUNCTION_SCOPE_DECL_KEY)"
 }
 
 function increase_index_scope() {
@@ -197,7 +197,7 @@ function decrease_index_scope() {
 
 # Retrieves shift index from the scope storage.
 function retrieve_index_scope() {
-    echo $(map_get $SCOPE_STORAGE_DECL_KEY $INDEX_SCOPE_STORAGE_DECL_KEY)
+    echo "$(map_get $SCOPE_STORAGE_DECL_KEY $INDEX_SCOPE_STORAGE_DECL_KEY)"
 }
 
 # Initializes internal storage.
@@ -360,8 +360,7 @@ function is_continue() {
 }
 
 function is_comment() {
-    local F=$1
-    if [[ "\"$F\"" =~ $COMMENT_DECL_KEY ]]; then
+    if [[ $1 =~ $COMMENT_DECL_KEY ]]; then
         set_first_regexp_match "${BASH_REMATCH[1]}" 
         return 0
     else    
@@ -439,7 +438,7 @@ function compose_ending_bracket() {
 }
 
 function compose_comment() {
-    echo "$(retrieve_shift)$COMMENT_RESERVED_KEY $1"
+    echo "$(retrieve_shift)$COMMENT_RESERVED_KEY$1"
 }
 
 function compose_shebang() {
@@ -458,10 +457,9 @@ function write_to_output() {
 
 # Initiates terminate exit.
 function terminate_exit() {
-    echo "it works"
-    # echo "Unsupported input was detacted!"
-    # rm $1
-    # exit 1
+    echo "Unsupported input was detacted!"
+    rm $1
+    exit 1
 }
 
 # Main entrypoint for the transpilator.
@@ -486,9 +484,9 @@ function main() {
         is_variable "$line"
         if [[ $? == 0 ]]; then
             if [[ $(retrieve_function_scope) == 1 ]]; then
-                write_to_output "$(compose_local_variable $(retrieve_first_regexp_match) $(retrieve_second_regexp_match))" $2
+                write_to_output "$(compose_local_variable "$(retrieve_first_regexp_match)" "$(retrieve_second_regexp_match)")" $2
             else
-                write_to_output "$(compose_global_variable $(retrieve_first_regexp_match) $(retrieve_second_regexp_match))" $2
+                write_to_output "$(compose_global_variable "$(retrieve_first_regexp_match)" "$(retrieve_second_regexp_match)")" $2
             fi
             
             continue
@@ -496,7 +494,7 @@ function main() {
 
         is_function_beginning "$line"
         if [[ $? == 0 ]]; then
-            write_to_output "$(compose_function_beginning $(retrieve_first_regexp_match))" $2
+            write_to_output "$(compose_function_beginning "$(retrieve_first_regexp_match)")" $2
             enable_function_scope
             increase_index_scope
             continue
@@ -504,19 +502,19 @@ function main() {
 
         is_function_call "$line"
         if [[ $? == 0 ]]; then
-            write_to_output "$(compose_function_call $(retrieve_first_regexp_match))" $2
+            write_to_output "$(compose_function_call "$(retrieve_first_regexp_match)")" $2
             continue
         fi
 
         is_function_return "$line"
         if [[ $? == 0 ]]; then
-            write_to_output "$(compose_function_return $(retrieve_first_regexp_match))" $2
+            write_to_output "$(compose_function_return "$(retrieve_first_regexp_match)")" $2
             continue
         fi
 
         is_if_condition "$line"
         if [[ $? == 0 ]]; then
-            write_to_output "$(compose_if_condition $(retrieve_first_regexp_match) $(retrieve_second_regexp_match) $(retrieve_third_regexp_match))" $2
+            write_to_output "$(compose_if_condition "$(retrieve_first_regexp_match)" "$(retrieve_second_regexp_match)" "$(retrieve_third_regexp_match)")" $2
             increase_if_scope
             increase_index_scope
             continue
@@ -524,7 +522,7 @@ function main() {
 
         is_for_cycle "$line"
         if [[ $? == 0 ]]; then
-            write_to_output "$(compose_for_cycle_beginning $(retrieve_first_regexp_match) $(retrieve_second_regexp_match) $(retrieve_third_regexp_match) $(retrieve_forth_regexp_match) $(retrieve_fifth_regexp_match))" $2
+            write_to_output "$(compose_for_cycle_beginning "$(retrieve_first_regexp_match)" "$(retrieve_second_regexp_match)" "$(retrieve_third_regexp_match)" "$(retrieve_forth_regexp_match)" "$(retrieve_fifth_regexp_match)")" $2
             increase_cycle_scope
             increase_index_scope
             continue
@@ -544,7 +542,7 @@ function main() {
 
         is_printf "$line"
         if [[ $? == 0 ]]; then
-            write_to_output "$(compose_printf $(retrieve_first_regexp_match))" $2
+            write_to_output "$(compose_printf "$(retrieve_first_regexp_match)")" $2
             continue
         fi
 
@@ -571,11 +569,9 @@ function main() {
 
         is_comment "$line"
         if [[ $? == 0 ]]; then
-            write_to_output "$(compose_comment $(retrieve_first_regexp_match))" $2
+            write_to_output "$(compose_comment "$(retrieve_first_regexp_match)")" $2
             continue
         fi
-
-        echo "$line"
 
         terminate_exit $2
     done < $1
