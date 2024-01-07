@@ -161,44 +161,51 @@ function retrieve_if_scope() {
     echo "$(map_get $SCOPE_STORAGE_DECL_KEY $IF_SCOPE_DECL_KEY)"
 }
 
+# Increases cycle scope index.
 function increase_cycle_scope() {
     local value=$(map_get $SCOPE_STORAGE_DECL_KEY $CYCLE_SCOPE_DECL_KEY)
     map_put $SCOPE_STORAGE_DECL_KEY $CYCLE_SCOPE_DECL_KEY $(( ++value ))
 }
 
+# Decreases cycle scope index.
 function decrease_cycle_scope() {
     local value=$(map_get $SCOPE_STORAGE_DECL_KEY $CYCLE_SCOPE_DECL_KEY)
     map_put $SCOPE_STORAGE_DECL_KEY $CYCLE_SCOPE_DECL_KEY $(( --value ))
 }
 
+# Retrieves cycle scope index.
 function retrieve_cycle_scope() {
     echo "$(map_get $SCOPE_STORAGE_DECL_KEY $CYCLE_SCOPE_DECL_KEY)"
 }
 
+# Enables function scope.
 function enable_function_scope() {
     map_put $SCOPE_STORAGE_DECL_KEY $FUNCTION_SCOPE_DECL_KEY 1
 }
 
+# Disables function scope.
 function disable_function_scope() {
     map_put $SCOPE_STORAGE_DECL_KEY $FUNCTION_SCOPE_DECL_KEY 0
 }
 
+# Checks if fucntion scope is enabled.
 function retrieve_function_scope() {
     echo "$(map_get $SCOPE_STORAGE_DECL_KEY $FUNCTION_SCOPE_DECL_KEY)"
 }
 
+# Increases shift index.
 function increase_index_scope() {
     local value=$(map_get $SCOPE_STORAGE_DECL_KEY $INDEX_SCOPE_STORAGE_DECL_KEY)
     map_put $SCOPE_STORAGE_DECL_KEY $INDEX_SCOPE_STORAGE_DECL_KEY $(( ++value ))
 }
 
-# Decreases shift index from scope storage.
+# Decreases shift index.
 function decrease_index_scope() {
     local value=$(map_get $SCOPE_STORAGE_DECL_KEY $INDEX_SCOPE_STORAGE_DECL_KEY)
     map_put $SCOPE_STORAGE_DECL_KEY $INDEX_SCOPE_STORAGE_DECL_KEY $(( --value ))
 }
 
-# Retrieves shift index from the scope storage.
+# Retrieves shift index.
 function retrieve_index_scope() {
     echo "$(map_get $SCOPE_STORAGE_DECL_KEY $INDEX_SCOPE_STORAGE_DECL_KEY)"
 }
@@ -300,7 +307,7 @@ function is_function_return() {
 }
 
 # Checks if the given line is variable increament
-function is_variable_increament() {
+function is_variable_increament_decreament() {
     if [[ $1 =~ $VARIABLE_INCREAMENT_DECL_KEY ]]; then
         set_first_regexp_match "${BASH_REMATCH[1]}"
         return 0    
@@ -428,91 +435,111 @@ function retrieve_shift() {
     echo "$shift"
 }
 
+# Composes declaration of the function beginning.
 function compose_function_beginning() {
     echo "$(retrieve_shift)$FUNCTION_RESERVED_KEY $1$LEFT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY $LEFT_BRACKET_RESERVED_KEY"
 }
 
+# Composes declaration of the function call.
 function compose_function_call() {
     echo "$(retrieve_shift) $1"
 }
 
+# Composes declaration of the function return.
 function compose_function_return() {
     echo "$(retrieve_shift)$ECHO_COMMAND $DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$1$RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY"
 }
 
+# Composes declaration of the variable, which is used as a function call result.
 function compose_local_variable_function_call() {
     echo "$(retrieve_shift)$LOCAL_RESERVED_KEY $1$EQUAL_RESERVED_KEY$DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$2$RIGHT_CURVED_BRACKET_RESERVED_KEY
     "
 }
 
+# Composes declaration of the variable, which is used as a function call result.
 function compose_global_variable_function_call() {
     echo "$(retrieve_shift)$1$EQUAL_RESERVED_KEY$DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$2$RIGHT_CURVED_BRACKET_RESERVED_KEY
     "
 }
 
-function compose_variable_increament() {
+# Composes declaration of the increament or decreament variable.
+function compose_variable_increament_decreament() {
     echo "$(retrieve_shift)$LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $1 $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY
     "
 }
 
+# Composes declaration of the basic local variable.
 function compose_local_variable() {
     echo "$(retrieve_shift)$LOCAL_RESERVED_KEY $1$EQUAL_RESERVED_KEY$DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $2 $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY
     "
 }
 
+# Composes declaration of the basic global variable.
 function compose_global_variable() {
     echo "$(retrieve_shift)$1$EQUAL_RESERVED_KEY$DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $2 $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY
     "
 }
 
+# Composes declaration of the if condition.
 function compose_if_condition() {   
     echo "$(retrieve_shift)$IF_RESERVED_KEY $LEFT_CUBIC_BRACKET_RESERVED_KEY$LEFT_CUBIC_BRACKET_RESERVED_KEY $DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $1 $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY $2 $DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $3 $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY $RIGHT_CUBIC_BRACKET_RESERVED_KEY$RIGHT_CUBIC_BRACKET_RESERVED_KEY$COLON_RESERVED_KEY $THEN_RESERVED_KEY"
 }
 
+# Composes declaration of the if condition ending.
 function compose_if_ending() {
     echo "$(retrieve_shift)$FI_RESERVED_KEY
     "
 }
 
+# Composes declaration of the while cycle beginning.
 function compose_while_cycle_beginning() {
     echo "$(retrieve_shift)$WHILE_RESERVED_KEY $LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $1 $2 $3 $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY$COLON_RESERVED_KEY $DO_RESERVED_KEY"
 }
 
+# Composes declaration of the for cycle beginning.
 function compose_for_cycle_beginning() {
     echo "$(retrieve_shift)$FOR_RESERVED_KEY $LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $1$EQUAL_RESERVED_KEY$2$COLON_RESERVED_KEY $1 $3 $4$COLON_RESERVED_KEY $5 $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY$COLON_RESERVED_KEY $DO_RESERVED_KEY"
 }
 
+# Composes declaration of the ending bracket for cycles.
 function compose_cycle_ending() {
     echo "$(retrieve_shift)$DONE_RESERVED_KEY
     "
 }
 
+# Composes declaration of the break statement used in cycles.
 function compose_break() {
     echo "$(retrieve_shift)$BREAK_RESERVED_KEY"
 }
 
+# Composes declaration of the continue statement used in cycles.
 function compose_continue() {
     echo "$(retrieve_shift)$CONTINUE_RESERVED_KEY"
 }
 
+# Composes declaration of the print function.
 function compose_printf() {
     echo "$(retrieve_shift)$ECHO_COMMAND \"$1\""
 }
 
+# Composes declaration of the ending bracket for functions.
 function compose_ending_bracket() {
     echo "$(retrieve_shift)$RIGHT_BRACKET_RESERVED_KEY
     "
 }
 
+# Composes declaration of the comment statement.
 function compose_comment() {
     echo "$(retrieve_shift)$COMMENT_RESERVED_KEY$1"
 }
 
+# Composes declaration of the shebang statement.
 function compose_shebang() {
     echo "$SHEBANG_RESERVED_KEY$DEFAULT_SHEBANG
     "
 }
 
+# Composes declaration of the entrypoint function execution.
 function compose_entrypoint_execution() {
     echo "$ENTRYPOINT_FUNCTION_RESERVED_KEY"
 }
@@ -521,6 +548,11 @@ function compose_entrypoint_execution() {
 function write_to_output() {
     echo "$1" >> $2
 }   
+
+# Prints ending operation message.
+function inform_about_ending() {
+    echo "Interpretation has been finished!"
+}
 
 # Initiates terminate exit.
 function terminate_exit() {
@@ -548,9 +580,9 @@ function main() {
             continue
         fi
 
-        is_variable_increament "$line"
+        is_variable_increament_decreament "$line"
         if [[ $? == 0 ]]; then
-            write_to_output "$(compose_variable_increament "$(retrieve_first_regexp_match)")" $2
+            write_to_output "$(compose_variable_increament_decreament "$(retrieve_first_regexp_match)")" $2
 
             continue
         fi
@@ -670,6 +702,7 @@ function main() {
     done < $1
 
     write_to_output "$(compose_entrypoint_execution)" $2
+    inform_about_ending
 }
 
 validate $1 $2
