@@ -4,12 +4,19 @@
 readonly FUNCTION_DECLARATION_REGEXP_DECL_KEY='^[a-z]+ ([a-z]+)\(\)( )?\{$'
 readonly FUNCTION_CALL_REGEXP_DECL_KEY='^([a-zA-Z]+)\(\)$'
 readonly FUNCTION_RETURN_REGEXP_DECL_KEY='^return( )?(\"(((\-)?[a-zA-Z0-9]+)\")|((\-)?[a-zA-Z0-9]+))\;$'
-readonly VARIABLE_REGEXP_DECL_KEY='^[a-zA-Z]+ ([a-zA-Z]+)( )?=( )?([a-zA-Z0-9 ]+)\;$'
+readonly VARIABLE_REGEXP_DECL_KEY='^[a-zA-Z]+ ([a-zA-Z]+)( )?=( )?([a-zA-Z0-9+\-\/\*\% ]+)\;$'
+readonly VARIABLE_INCREAMENT_DECL_KEY='^(([a-zA-Z]+\+\+)|([a-zA-Z]+\-\-)|(\-\-[a-zA-Z]+)|(\+\+[a-zA-Z]+))\;$'
+readonly VARIABLE_WITH_FUNCTION_CALL_REGEXP_DECL_KEY='^[a-zA-Z]+ ([a-zA-Z]+)( )?=( )?(([a-zA-Z]+)\(\))\;$'
 readonly PRINT_REGEXP_DECL_KEY='^printf\("([a-zA-Z0-9 ]+)"\)\;$'
 readonly INCLUDE_REGEXP_DECL_KEY='(^#include( )?<[a-z]+(\.h)?>)|(#include "[a-z]+(\.h)?")$'
 readonly IF_CONDITION_REGEXP_DECL_KEY='^if( )?\(([a-zA-Z0-9]+)( )?(==|!=|<|<=|>|>=)( )?([a-zA-Z0-9]+)\)( )?\{$'
+readonly WHILE_CYCLE_REGEXP_DECL_KEY=''
 readonly FOR_CYCLE_REGEXP_DECL_KEY='^for( )?\([a-zA-Z0-9]+ ([a-zA-Z0-9]+)( )?=( )?([a-zA-Z0-9]+)\;( )?[a-zA-Z0-9]+( )?(<|>|>=|<|<=)( )?([a-zA-Z0-9]+)\;( )?((([a-zA-Z0-9]+\+\+)\))|(([a-zA-Z0-9]+\-\-)\))|((\-\-[a-zA-Z0-9]+)\))|((\+\+[a-zA-Z0-9]+)\)))( )?\{$'
 readonly COMMENT_DECL_KEY='^\/\/([a-zA-Z0-9\. ]+)$'
+
+#\b[^()]+\((.*)\)$
+
+# TODO: add while cycle add simple function call. IT'S A FINISH!
 
 # Describes input code reserved keys, used for output composition.
 readonly IF_RESERVED_KEY='if'
@@ -243,22 +250,27 @@ function validate() {
     > $2
 }
 
+# Splits function arguments into parsable structure.
+function split_function_arguments() {
+    echo "it works"
+}
+
 # Checks if the given line is empty.
 function is_empty() {
     if [ -z "$1" ]; then
         return 0
-    else 
-        return 1
     fi
+
+    return 1
 }
 
 # Checks if the given line is ignorable.
 function is_ignorable() {
     if [[ $1 =~ $INCLUDE_REGEXP_DECL_KEY ]]; then
         return 0
-    else    
-        return 1
     fi
+
+    return 1
 }
 
 # Checks if the given line is a function beginning declaration.
@@ -266,9 +278,9 @@ function is_function_beginning() {
     if [[ $1 =~ $FUNCTION_DECLARATION_REGEXP_DECL_KEY ]]; then
         set_first_regexp_match "${BASH_REMATCH[1]}"
         return 0
-    else    
-        return 1
     fi
+
+    return 1
 }
 
 # Checks if the given line is a function call declaration.
@@ -276,9 +288,9 @@ function is_function_call() {
     if [[ $1 =~ $FUNCTION_CALL_REGEXP_DECL_KEY ]]; then
         set_first_regexp_match "${BASH_REMATCH[1]}"
         return 0
-    else    
-        return 1
     fi
+
+    return 1
 }
 
 # Checks if the given line is a function return declaration.
@@ -286,47 +298,72 @@ function is_function_return() {
     if [[ $1 =~ $FUNCTION_RETURN_REGEXP_DECL_KEY ]]; then
         set_first_regexp_match "${BASH_REMATCH[2]}"
         return 0
-    else    
-        return 1
     fi
+
+    return 1
 }
 
+# Checks if the given line is variable increament
+function is_variable_increament() {
+    if [[ $1 =~ $VARIABLE_INCREAMENT_DECL_KEY ]]; then
+        set_first_regexp_match "${BASH_REMATCH[1]}"
+        return 0    
+    fi
+
+    return 1
+}
+
+# Checks if the given line is a variable declaration with a function call.
+function is_variable_with_function_call() {
+    if [[ $1 =~ $VARIABLE_WITH_FUNCTION_CALL_REGEXP_DECL_KEY ]]; then
+        set_first_regexp_match "${BASH_REMATCH[1]}"
+        set_second_regexp_match "${BASH_REMATCH[5]}"
+        return 0  
+    fi
+
+    return 1
+}
+
+# Checks if the given line is a variable declaration.
 function is_variable() {
     if [[ $1 =~ $VARIABLE_REGEXP_DECL_KEY ]]; then
         set_first_regexp_match "${BASH_REMATCH[1]}"
         set_second_regexp_match "${BASH_REMATCH[4]}"
         return 0
-    else    
-        return 1
     fi
+
+    return 1
 }
 
+# Checks if the given line is an ending bracket.
 function is_ending_bracket() {
     if [[ $1 =~ $RIGHT_BRACKET_RESERVED_KEY ]]; then
         return 0
-    else    
-        return 1
     fi
+
+    return 1
 }
 
+# Checks if the given line is a printf declaration.
 function is_printf() {
     if [[ $1 =~ $PRINT_REGEXP_DECL_KEY ]]; then
         set_first_regexp_match "${BASH_REMATCH[1]}"
         return 0
-    else    
-        return 1
     fi
+
+    return 1
 }
 
+# Checks if the given line is an if condition.
 function is_if_condition() {
     if [[ $1 =~ $IF_CONDITION_REGEXP_DECL_KEY ]]; then
         set_first_regexp_match "${BASH_REMATCH[2]}"
         set_second_regexp_match "${BASH_REMATCH[4]}"
         set_third_regexp_match "${BASH_REMATCH[6]}"
         return 0
-    else    
-        return 1
     fi
+
+    return 1
 }
 
 # Checks if the given line is a for cycle declaration.
@@ -338,34 +375,37 @@ function is_for_cycle() {
         set_forth_regexp_match "${BASH_REMATCH[10]}"
         set_fifth_regexp_match "${BASH_REMATCH[14]}"
         return 0
-    else    
-        return 1
     fi
+
+    return 1
 }
 
+# Checks if the given line is a break declaration.
 function is_break() {
     if [[ $1 =~ $BREAK_RESERVED_KEY ]]; then
         return 0
-    else    
-        return 1
     fi
+
+    return 1
 }
 
+# Checks if the given line is a continue declaration.
 function is_continue() {
     if [[ $1 =~ $CONTINUE_RESERVED_KEY ]]; then
         return 0
-    else    
-        return 1
     fi
+
+    return 1
 }
 
+# Checks if the given line is a comment declaration.
 function is_comment() {
     if [[ $1 =~ $COMMENT_DECL_KEY ]]; then
         set_first_regexp_match "${BASH_REMATCH[1]}" 
         return 0
-    else    
-        return 1
     fi
+
+    return 1
 }
 
 # Generates local shift due to the previously saved state.
@@ -389,16 +429,36 @@ function compose_function_call() {
 }
 
 function compose_function_return() {
-    echo "$(retrieve_shift)$ECHO_COMMAND $1"
+    echo "$(retrieve_shift)$ECHO_COMMAND $DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$1$RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY"
+}
+
+function compose_local_variable_function_call() {
+    echo "$(retrieve_shift)$LOCAL_RESERVED_KEY $1$EQUAL_RESERVED_KEY$DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$2$RIGHT_CURVED_BRACKET_RESERVED_KEY
+    "
+}
+
+function compose_global_variable_function_call() {
+    echo "$(retrieve_shift)$1$EQUAL_RESERVED_KEY$DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$2$RIGHT_CURVED_BRACKET_RESERVED_KEY
+    "
+}
+
+function compose_local_variable_increament() {
+    echo "$(retrieve_shift)$LOCAL_RESERVED_KEY $1$EQUAL_RESERVED_KEY$DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $2 $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY
+    "
+}
+
+function compose_global_variable_increament() {
+    echo "$(retrieve_shift)$1$EQUAL_RESERVED_KEY$DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $2 $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY
+    "
 }
 
 function compose_local_variable() {
-    echo "$(retrieve_shift)$LOCAL_RESERVED_KEY $1$EQUAL_RESERVED_KEY$2
+    echo "$(retrieve_shift)$LOCAL_RESERVED_KEY $1$EQUAL_RESERVED_KEY$DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $2 $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY
     "
 }
 
 function compose_global_variable() {
-    echo "$(retrieve_shift)$1$EQUAL_RESERVED_KEY$2
+    echo "$(retrieve_shift)$1$EQUAL_RESERVED_KEY$DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $2 $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY
     "
 }
 
@@ -478,6 +538,27 @@ function main() {
 
         is_ignorable "$line"
         if [[ $? == 0 ]]; then
+            continue
+        fi
+
+        is_variable_increament "$line"
+        if [[ $? == 0 ]]; then
+            if [[ $(retrieve_function_scope) == 1 ]]; then
+                write_to_output "$(compose_local_variable_increament "$(retrieve_first_regexp_match)")" $2
+            else
+                write_to_output "$(compose_global_variable_increament "$(retrieve_first_regexp_match)")" $2
+            fi
+            continue
+        fi
+
+        is_variable_with_function_call "$line"
+        if [[ $? == 0 ]]; then
+            if [[ $(retrieve_function_scope) == 1 ]]; then
+                write_to_output "$(compose_local_variable_function_call "$(retrieve_first_regexp_match)" "$(retrieve_second_regexp_match)")" $2
+            else
+                write_to_output "$(compose_global_variable_function_call "$(retrieve_first_regexp_match)" "$(retrieve_second_regexp_match)")" $2
+            fi
+            
             continue
         fi
 
