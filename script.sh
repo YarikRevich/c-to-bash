@@ -7,12 +7,12 @@ readonly FUNCTION_RETURN_REGEXP_DECL_KEY='^return( )?(\"(((\-)?[a-zA-Z0-9]+)\")|
 readonly VARIABLE_REGEXP_DECL_KEY='^[a-zA-Z]+ ([a-zA-Z]+)( )?=( )?([a-zA-Z0-9+\-\/\*\% ]+)\;$'
 readonly VARIABLE_INCREAMENT_DECL_KEY='^(([a-zA-Z]+\+\+)|([a-zA-Z]+\-\-)|(\-\-[a-zA-Z]+)|(\+\+[a-zA-Z]+))\;$'
 readonly VARIABLE_WITH_FUNCTION_CALL_REGEXP_DECL_KEY='^[a-zA-Z]+ ([a-zA-Z]+)( )?=( )?(([a-zA-Z]+)\(\))\;$'
-readonly PRINT_REGEXP_DECL_KEY='^printf\("([a-zA-Z0-9 ]+)"\)\;$'
+readonly PRINT_REGEXP_DECL_KEY='^printf\("([a-zA-Z0-9\!\?\. ]+)"\)\;$'
 readonly INCLUDE_REGEXP_DECL_KEY='(^#include( )?<[a-z]+(\.h)?>)|(#include "[a-z]+(\.h)?")$'
 readonly IF_CONDITION_REGEXP_DECL_KEY='^if( )?\(([a-zA-Z0-9]+)( )?(==|!=|>|>=|<|<=)( )?([a-zA-Z0-9]+)\)( )?\{$'
 readonly WHILE_CYCLE_REGEXP_DECL_KEY='^while( )?\(([a-zA-Z0-9]+)( )?(==|!=|>|>=|<|<=)( )?([a-zA-Z0-9]+)\)( )?\{$'
 readonly FOR_CYCLE_REGEXP_DECL_KEY='^for( )?\([a-zA-Z0-9]+ ([a-zA-Z0-9]+)( )?=( )?([a-zA-Z0-9]+)\;( )?[a-zA-Z0-9]+( )?(==|!=|>|>=|<|<=)( )?([a-zA-Z0-9]+)\;( )?((([a-zA-Z0-9]+\+\+)\))|(([a-zA-Z0-9]+\-\-)\))|((\-\-[a-zA-Z0-9]+)\))|((\+\+[a-zA-Z0-9]+)\)))( )?\{$'
-readonly COMMENT_DECL_KEY='^\/\/([a-zA-Z0-9\. ]+)$'
+readonly COMMENT_DECL_KEY='^\/\/([a-zA-Z0-9\!\?\. ]+)$'
 
 # Describes input code reserved keys, used for output composition.
 readonly IF_RESERVED_KEY='if'
