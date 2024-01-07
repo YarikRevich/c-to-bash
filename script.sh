@@ -9,14 +9,10 @@ readonly VARIABLE_INCREAMENT_DECL_KEY='^(([a-zA-Z]+\+\+)|([a-zA-Z]+\-\-)|(\-\-[a
 readonly VARIABLE_WITH_FUNCTION_CALL_REGEXP_DECL_KEY='^[a-zA-Z]+ ([a-zA-Z]+)( )?=( )?(([a-zA-Z]+)\(\))\;$'
 readonly PRINT_REGEXP_DECL_KEY='^printf\("([a-zA-Z0-9 ]+)"\)\;$'
 readonly INCLUDE_REGEXP_DECL_KEY='(^#include( )?<[a-z]+(\.h)?>)|(#include "[a-z]+(\.h)?")$'
-readonly IF_CONDITION_REGEXP_DECL_KEY='^if( )?\(([a-zA-Z0-9]+)( )?(==|!=|<|<=|>|>=)( )?([a-zA-Z0-9]+)\)( )?\{$'
-readonly WHILE_CYCLE_REGEXP_DECL_KEY=''
-readonly FOR_CYCLE_REGEXP_DECL_KEY='^for( )?\([a-zA-Z0-9]+ ([a-zA-Z0-9]+)( )?=( )?([a-zA-Z0-9]+)\;( )?[a-zA-Z0-9]+( )?(<|>|>=|<|<=)( )?([a-zA-Z0-9]+)\;( )?((([a-zA-Z0-9]+\+\+)\))|(([a-zA-Z0-9]+\-\-)\))|((\-\-[a-zA-Z0-9]+)\))|((\+\+[a-zA-Z0-9]+)\)))( )?\{$'
+readonly IF_CONDITION_REGEXP_DECL_KEY='^if( )?\(([a-zA-Z0-9]+)( )?(==|!=|>|>=|<|<=)( )?([a-zA-Z0-9]+)\)( )?\{$'
+readonly WHILE_CYCLE_REGEXP_DECL_KEY='^while( )?\(([a-zA-Z0-9]+)( )?(==|!=|>|>=|<|<=)( )?([a-zA-Z0-9]+)\)( )?\{$'
+readonly FOR_CYCLE_REGEXP_DECL_KEY='^for( )?\([a-zA-Z0-9]+ ([a-zA-Z0-9]+)( )?=( )?([a-zA-Z0-9]+)\;( )?[a-zA-Z0-9]+( )?(==|!=|>|>=|<|<=)( )?([a-zA-Z0-9]+)\;( )?((([a-zA-Z0-9]+\+\+)\))|(([a-zA-Z0-9]+\-\-)\))|((\-\-[a-zA-Z0-9]+)\))|((\+\+[a-zA-Z0-9]+)\)))( )?\{$'
 readonly COMMENT_DECL_KEY='^\/\/([a-zA-Z0-9\. ]+)$'
-
-#\b[^()]+\((.*)\)$
-
-# TODO: add while cycle add simple function call. IT'S A FINISH!
 
 # Describes input code reserved keys, used for output composition.
 readonly IF_RESERVED_KEY='if'
@@ -366,6 +362,18 @@ function is_if_condition() {
     return 1
 }
 
+# Checks if the given line is a while cycle declaration.
+function is_while_cycle() {
+    if [[ $1 =~ $WHILE_CYCLE_REGEXP_DECL_KEY ]]; then
+        set_first_regexp_match "${BASH_REMATCH[2]}"
+        set_second_regexp_match "${BASH_REMATCH[4]}"
+        set_third_regexp_match "${BASH_REMATCH[6]}"
+        return 0
+    fi
+
+    return 1
+}
+
 # Checks if the given line is a for cycle declaration.
 function is_for_cycle() {
     if [[ $1 =~ $FOR_CYCLE_REGEXP_DECL_KEY ]]; then
@@ -442,13 +450,8 @@ function compose_global_variable_function_call() {
     "
 }
 
-function compose_local_variable_increament() {
-    echo "$(retrieve_shift)$LOCAL_RESERVED_KEY $1$EQUAL_RESERVED_KEY$DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $2 $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY
-    "
-}
-
-function compose_global_variable_increament() {
-    echo "$(retrieve_shift)$1$EQUAL_RESERVED_KEY$DOLLAR_SIGN_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $2 $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY
+function compose_variable_increament() {
+    echo "$(retrieve_shift)$LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $1 $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY
     "
 }
 
@@ -469,6 +472,10 @@ function compose_if_condition() {
 function compose_if_ending() {
     echo "$(retrieve_shift)$FI_RESERVED_KEY
     "
+}
+
+function compose_while_cycle_beginning() {
+    echo "$(retrieve_shift)$WHILE_RESERVED_KEY $LEFT_CURVED_BRACKET_RESERVED_KEY$LEFT_CURVED_BRACKET_RESERVED_KEY $1 $2 $3 $RIGHT_CURVED_BRACKET_RESERVED_KEY$RIGHT_CURVED_BRACKET_RESERVED_KEY$COLON_RESERVED_KEY $DO_RESERVED_KEY"
 }
 
 function compose_for_cycle_beginning() {
@@ -517,8 +524,8 @@ function write_to_output() {
 
 # Initiates terminate exit.
 function terminate_exit() {
-    echo "Unsupported input was detacted!"
-    rm $1
+    echo "Unsupported input was detacted: $1"
+    rm $2
     exit 1
 }
 
@@ -543,11 +550,8 @@ function main() {
 
         is_variable_increament "$line"
         if [[ $? == 0 ]]; then
-            if [[ $(retrieve_function_scope) == 1 ]]; then
-                write_to_output "$(compose_local_variable_increament "$(retrieve_first_regexp_match)")" $2
-            else
-                write_to_output "$(compose_global_variable_increament "$(retrieve_first_regexp_match)")" $2
-            fi
+            write_to_output "$(compose_variable_increament "$(retrieve_first_regexp_match)")" $2
+
             continue
         fi
 
@@ -597,6 +601,14 @@ function main() {
         if [[ $? == 0 ]]; then
             write_to_output "$(compose_if_condition "$(retrieve_first_regexp_match)" "$(retrieve_second_regexp_match)" "$(retrieve_third_regexp_match)")" $2
             increase_if_scope
+            increase_index_scope
+            continue
+        fi
+
+        is_while_cycle "$line"
+        if [[ $? == 0 ]]; then
+            write_to_output "$(compose_while_cycle_beginning "$(retrieve_first_regexp_match)" "$(retrieve_second_regexp_match)" "$(retrieve_third_regexp_match)")" $2
+            increase_cycle_scope
             increase_index_scope
             continue
         fi
@@ -654,7 +666,7 @@ function main() {
             continue
         fi
 
-        terminate_exit $2
+        terminate_exit $line $2
     done < $1
 
     write_to_output "$(compose_entrypoint_execution)" $2
