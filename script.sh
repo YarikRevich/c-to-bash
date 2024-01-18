@@ -253,11 +253,6 @@ function validate() {
     > $2
 }
 
-# Splits function arguments into parsable structure.
-function split_function_arguments() {
-    echo "it works"
-}
-
 # Checks if the given line is empty.
 function is_empty() {
     if [ -z "$1" ]; then
