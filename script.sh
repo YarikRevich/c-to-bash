@@ -562,9 +562,6 @@ function main() {
 
     while read -r line || [ -n "$line" ]
     do
-        # Generate UUID for the token
-        local uuid=$(uuidgen)
-
         is_empty "$line"
         if [[ $? == 0 ]]; then
             continue
